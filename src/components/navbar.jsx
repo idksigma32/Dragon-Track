@@ -34,7 +34,23 @@ export function Navbar() {
       <Link href="/" className="mb-8 flex items-center gap-2 text-xl font-bold text-orange-600">
         <GraduationCap className="size-7" />
         DragonTrack
-      </Link>
+      </Link>  {isReady && !user && (
+          <div className="flex gap-3 text-sm">
+            <Link href="/sign-in" className="text-orange-600">Sign in</Link>
+            <Link href="/sign-up" className="text-orange-600">Sign up</Link>
+          </div>
+        )}
+
+        {isReady && user && (
+          <Button variant="outline" className="w-full" onClick={signOut}>
+            <LogOut className="mr-2 size-4" />
+            Sign Out
+          </Button>
+
+        )}
+        <br></br>
+
+
 
       <nav className="flex flex-col gap-2">
         {pages.map(({ title, href, icon: Icon }) => (
@@ -68,19 +84,7 @@ export function Navbar() {
 
         <ThemeToggle />
 
-        {isReady && !user && (
-          <div className="flex gap-3 text-sm">
-            <Link href="/sign-in" className="text-orange-600">Sign in</Link>
-            <Link href="/sign-up" className="text-orange-600">Sign up</Link>
-          </div>
-        )}
-
-        {isReady && user && (
-          <Button variant="outline" className="w-full" onClick={signOut}>
-            <LogOut className="mr-2 size-4" />
-            Sign Out
-          </Button>
-        )}
+      
       </div>
     </aside>
   );
