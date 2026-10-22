@@ -4,28 +4,28 @@ import { useState } from "react";
 
 const students = [
   {
-    fullName: "Alex Morgan",
+    fullName: "Vihaan Grover",
     currentDeliverable: "Landing page draft",
     progress: "12/16",
     status: "In progress",
     missingAssignments: [{ assignment: "Responsive nav test", date: "Sep 18, 2026" }],
   },
   {
-    fullName: "Jamie Rivera",
+    fullName: "Chris Pulimoottil",
     currentDeliverable: "Moodboard review",
     progress: "9/16",
     status: "Completed",
     missingAssignments: [],
   },
   {
-    fullName: "Tayler Kim",
+    fullName: "Bryson Chen",
     currentDeliverable: "Wireframe check",
     progress: "15/16",
     status: "Completed",
     missingAssignments: [],
   },
   {
-    fullName: "Jordan Lee",
+    fullName: "Moksh Arun",
     currentDeliverable: "Homepage layout",
     progress: "8/16",
     status: "In progress",

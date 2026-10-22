@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, CheckCircle2, Users, ClipboardList } from "lucide-react";
 
 const students = [
-  "Avery Bennett", "Jordan Kim", "Maya Patel", "Ethan Brooks",
+  "Vihaan Grover", "Chris Pulimoottil", "Bryson Chen", "Moksh Arun",
   "Sofia Rivera", "Noah Williams", "Isabella Chen", "Liam Thompson",
   "Amara Johnson", "Lucas Martinez", "Harper Davis", "Elijah Wilson",
   "Zoe Anderson", "Mateo Garcia", "Nina Thompson", "Caleb Moore",
