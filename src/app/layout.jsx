@@ -4,7 +4,7 @@ import "./globals.css";
 
 // The layout stays a Server Component so Next.js can read this metadata.
 export const metadata = {
-  title: "Project Starter",
+  title: "Dragon Track",
   description: "A simple Next.js, shadcn, and PocketBase project.",
 };
 
