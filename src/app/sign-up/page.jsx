@@ -1,163 +1,267 @@
+
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { useAuth } from "@/hooks/auth";
-import { isPocketBaseConfigured } from "@/pocketbase";
+import { GraduationCap, BookOpen, Eye, EyeOff } from "lucide-react";
+
+import { pb } from "@/pocketbase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { user, isReady, isPending, error, signup } = useAuth();
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    defaultValues: { name: "", email: "", password: "", passwordConfirm: "" },
-  });
 
-  // The hook creates the account, then signs it in. Navigate only when both succeed.
-  async function createAccount(values) {
+  const [role, setRole] = useState("student");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [teacherKey, setTeacherKey] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await signup(values);
-      reset();
-      router.replace("/page-five");
-    } catch {
-      // If the account was created but login failed, the message links to sign-in.
+      if (role === "teacher") {
+        const response = await fetch("/api/register-teacher", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            passwordConfirm: confirmPassword,
+            teacherKey,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Teacher registration failed.");
+        }
+      } else {
+        // Student role must be assigned by PocketBase defaults.
+        await pb.collection("users").create({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          passwordConfirm: confirmPassword,
+        });
+      }
+
+      await pb.collection("users").authWithPassword(
+        email.trim(),
+        password
+      );
+
+      router.push(role === "teacher" ? "/page-six" : "/");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err.response?.message ||
+          err.message ||
+          "Could not create account."
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <section className="mx-auto max-w-sm space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Create account
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Create an account to open Page Five.
-        </p>
-      </div>
-      {!isPocketBaseConfigured && (
-        <p
-          role="status"
-          className="rounded-lg border bg-muted/40 p-4 text-sm leading-6"
-        >
-          Find your PocketBase link in the LMS and add it to{" "}
-          <code>src/pocketbase.js</code>. Follow README-auth.md to set up
-          accounts.
-        </p>
-      )}
-      {!isReady ? (
-        <p role="status">Checking your login…</p>
-      ) : user ? (
-        <p>
-          You are signed in.{" "}
-          <Link href="/page-five" className="underline underline-offset-4">
-            Open Page Five
-          </Link>
-          .
-        </p>
-      ) : (
-        <form onSubmit={handleSubmit(createAccount)} className="space-y-4">
-          <fieldset
-            disabled={
-              !isPocketBaseConfigured || isPending || !!error?.accountCreated
-            }
-            className="space-y-4"
-          >
+    <main className="flex min-h-screen items-center justify-center bg-orange-50 p-4 dark:bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-orange-500 text-white">
+            <GraduationCap className="size-8" />
+          </div>
+
+          <CardTitle className="text-3xl font-bold">
+            Join DragonTrack
+          </CardTitle>
+
+          <p className="text-sm text-muted-foreground">
+            Create your account to get started.
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label>Choose your account type</Label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRole("student");
+                    setError("");
+                  }}
+                  className={`rounded-xl border-2 p-4 text-center transition ${
+                    role === "student"
+                      ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/20"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <BookOpen className="mx-auto mb-2 size-6" />
+                  <span className="font-semibold">Student</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRole("teacher");
+                    setError("");
+                  }}
+                  className={`rounded-xl border-2 p-4 text-center transition ${
+                    role === "teacher"
+                      ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950/20"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <GraduationCap className="mx-auto mb-2 size-6" />
+                  <span className="font-semibold">Teacher</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                autoComplete="name"
-                maxLength={60}
-                {...register("name")}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
-                {...register("email")}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                {...register("password")}
-              />
-              <p className="text-xs text-muted-foreground">
-                Use at least 8 characters.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="passwordConfirm">Confirm password</Label>
-              <Input
-                id="passwordConfirm"
-                type="password"
-                autoComplete="new-password"
-                required
-                aria-invalid={!!errors.passwordConfirm}
-                aria-describedby={
-                  errors.passwordConfirm ? "password-confirm-error" : undefined
-                }
-                {...register("passwordConfirm", {
-                  validate: function passwordsMatch(value, values) {
-                    return value === values.password || "Passwords must match.";
-                  },
-                })}
-              />
-              {errors.passwordConfirm && (
-                <p
-                  id="password-confirm-error"
-                  role="alert"
-                  className="text-sm text-destructive"
+
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  minLength={8}
+                  required
+                />
+
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
-                  {errors.passwordConfirm.message}
-                </p>
-              )}
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
             </div>
-            <Button type="submit" className="w-full">
-              {isPending ? "Creating account…" : "Create account"}
-            </Button>
-          </fieldset>
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error.message}
-            </p>
-          )}
-          {error?.accountCreated && (
-            <Link
-              href="/sign-in"
-              className="block text-sm underline underline-offset-4"
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm">Confirm Password</Label>
+              <Input
+                id="confirm"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {role === "teacher" && (
+              <div className="space-y-2 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:bg-orange-950/20">
+                <Label htmlFor="teacherKey">
+                  Teacher Registration Key
+                </Label>
+
+                <Input
+                  id="teacherKey"
+                  type="password"
+                  value={teacherKey}
+                  onChange={(e) => setTeacherKey(e.target.value)}
+                  placeholder="Enter your teacher key"
+                  autoComplete="off"
+                  required
+                />
+
+                <p className="text-xs text-muted-foreground">
+                  Teacher accounts require a registration key
+                  provided by the DragonTrack administrator.
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-orange-500 hover:bg-orange-600"
             >
-              Account created — go to sign in
-            </Link>
-          )}
-        </form>
-      )}
-      <p className="text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link
-          href="/sign-in"
-          className="text-foreground underline underline-offset-4"
-        >
-          Sign in
-        </Link>
-      </p>
-    </section>
+              {loading
+                ? "Creating Account..."
+                : `Create ${role === "teacher" ? "Teacher" : "Student"} Account`}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link
+                href="/sign-in"
+                className="font-semibold text-orange-600 hover:underline"
+              >
+                Sign In
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
